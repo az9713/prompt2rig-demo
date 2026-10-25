@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>prompt2rig beginner guide</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--muted:#666;--line:#ddd;--code:#f4f4f4}
+@media (prefers-color-scheme:dark){:root{--bg:#151515;--fg:#e8e8e8;--muted:#999;--line:#333;--code:#222}}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,sans-serif;max-width:900px;margin:0 auto;padding:24px 16px}
+h1,h2,h3{line-height:1.25} h2{border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:2em}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font:0.9em Consolas,ui-monospace,monospace;word-break:break-word}
+table{border-collapse:collapse;width:100%;display:block;overflow-x:auto;font-size:0.93em}
+th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+th{background:var(--code)} a{color:#3a7bd5}
+</style></head><body>
+<h1>prompt2rig: beginner showcase project (Windows)</h1>
+<p>Oct 25, 2026.</p>
+<p>Source read: <code>mixamorig_stefan/prompt2rig-main</code> (server.mjs, public/<em>.js, hq/</em>, tools/<em>, bench/</em>). Everything below is checked against that code, not just the README.</p>
+<h2>1. What the system actually is</h2>
+<p>prompt2rig is "generative mocap": it uses a text-to-video model as a motion prior, then inverts the video back into skeletal animation.</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Code</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Performer image</td>
+<td><code>server.mjs /api/image</code></td>
+<td>FLUX.1 schnell on fal makes one neutral full-body person on a plain backdrop. Every clip starts from it (image-to-video), which is what pose estimators like best.</td>
+</tr>
+<tr>
+<td>Video</td>
+<td><code>server.mjs /api/video</code></td>
+<td>fal: MiniMax H3 Max Turbo (480P, ~2-3 s wall) or FLUX 3 Max (720p, ~9 s). Prompt is wrapped in a STAGING clause in <code>app.js</code> (face camera, limbs away from torso, static camera, no cuts).</td>
+</tr>
+<tr>
+<td>Live pass</td>
+<td><code>public/app.js</code> + <code>retarget.js</code></td>
+<td>MediaPipe Pose in the browser, landmarks retargeted to Mixamo bones per frame. Instant, jittery, no GPU needed.</td>
+</tr>
+<tr>
+<td>HQ pass</td>
+<td><code>hq/worker.py</code> (FastAPI, 127.0.0.1:5178)</td>
+<td>GVHMR on your GPU: YOLO11m person boxes, ViTPose 2D, HMR2 features, then gravity-aware world-frame SMPL rotations + root translation for the whole clip at once. L/R keypoint-swap stabilizer borrowed from Motion2MixamoRig. Returns axis-angle <code>global_orient</code>, <code>body_pose</code> (21 joints), <code>transl</code>, leg length.</td>
+</tr>
+<tr>
+<td>Fingers</td>
+<td><code>hq/hands.py</code></td>
+<td>WiLoR (needs MANO) or MediaPipe Hands fallback, run in parallel with GVHMR, matched to wrists, rotated into world frame, smoothed.</td>
+</tr>
+<tr>
+<td>Retarget</td>
+<td><code>public/retarget.js</code></td>
+<td>SMPL rotations to Mixamo bones (any T-pose Mixamo .fbx/.glb), live-to-HQ cross-fade.</td>
+</tr>
+<tr>
+<td>Export</td>
+<td><code>app.js</code> GLTFExporter, <code>/api/takes</code></td>
+<td>"↓ glb" writes a skinned animated GLB into <code>takes/</code> plus a JSON with the source clip URL.</td>
+</tr>
+<tr>
+<td>Render</td>
+<td><code>tools/render_blender.py</code></td>
+<td>Headless Blender: cyclorama, 3-point light, camera arc, optional side-by-side with source clip.</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td><code>tools/capture.mjs</code></td>
+<td>Puppeteer drives headless Chrome, frame-exact 2560×1440 recordings.</td>
+</tr>
+<tr>
+<td>Bench</td>
+<td><code>bench/</code></td>
+<td>Hand-pose metrics: detection rate, 2D jitter, speed, overlays.</td>
+</tr>
+</tbody>
+</table>
+<p>Key idea worth internalising: the live pass is per-frame (no temporal model, so jitter and bone-length drift), the HQ pass is a sequence model with a fixed-proportion body and gravity alignment, so it fixes jitter, limb stretch and forearm twist. The whole UX is built to hide the 4 s HQ latency behind the instant preview.</p>
+<p>License trap: the HQ path (GVHMR, SMPL-X, WiLoR, MANO) is non-commercial, YOLO is AGPL. Fine for a personal showcase, not for a product.</p>
+<h2>2. The beginner project: "Prompt-to-Reel"</h2>
+<p>Goal: a 30-60 s vertical reel of one Mixamo character performing 4 prompted moves, each shown side by side with the AI source clip, plus a one-page note quantifying live vs HQ quality. It touches every capability: prompt engineering for pose-estimability, both video models, live and HQ retargeting, fingers, GLB export, Blender render.</p>
+<p>Built in tiers so you get a result in 15 minutes even before the GPU stack works.</p>
+<h3>Tier 0: browser only (15 min, no GPU needed)</h3>
+<p>Prereqs: Node 18+ (<code>winget install OpenJS.NodeJS.LTS</code>), a fal API key with credit.</p>
+<ol>
+<li>Open PowerShell in <code>prompt2rig-main</code>.</li>
+<li>Create <code>.env</code> (see Windows friction #1 for why not <code>echo &gt;</code>): <code>Set-Content -Path .env -Value 'FAL_KEY=your_key_here' -Encoding ascii</code></li>
+<li><code>node server.mjs</code> and open http://localhost:5177. The hq pill will say offline; that is expected.</li>
+<li>Choose H3 Max Turbo, character X Bot, run preset "does jumping jacks". Watch the MediaPipe live retarget.</li>
+<li>Write 4 prompts of your own following the rule in the code: face camera, limbs clear of torso, no spins, flips, floor work or crossed arms. Example set: "mimes a tennis forehand and backhand", "does the Macarena", "conducts an orchestra with big sweeping arms", "counts to five on both hands, holding each number up" (the last one is your finger test).</li>
+<li>Load a Mixamo character of your own (mixamo.com, export FBX in T-pose) via "load mixamo file…".</li>
+<li>Press "↓ glb" on each take. Files land in <code>takes/</code>.</li>
+</ol>
+<h3>Tier 1: HQ pass on your NVIDIA GPU (1-2 h, mostly downloads)</h3>
+<p>Prereqs on PATH: <code>uv</code> (<code>winget install astral-sh.uv</code>), <code>ffmpeg</code> (<code>winget install Gyan.FFmpeg</code>), <code>git</code> (<code>winget install Git.Git</code>; requirements.txt pulls from git+https). Open a new terminal after installing so PATH refreshes.</p>
+<ol>
+<li><code>powershell -ExecutionPolicy Bypass -File hq\setup.ps1</code> (friction #3). Expect about 5 GB of checkpoints.</li>
+<li>Register at smpl-x.is.tue.mpg.de, download SMPL-X v1.1 NPZ, put <code>SMPLX_NEUTRAL.npz</code> in <code>hq\body_models\smplx\</code>.</li>
+<li>Optional fingers: register at mano.is.tue.mpg.de, download <code>mano_v1_2.zip</code>, run <code>hq\.venv\Scripts\python hq\setup_hands.py $HOME\Downloads\mano_v1_2.zip</code> (WiLoR checkpoint is 2.5 GB).</li>
+<li>Second terminal: <code>hq\.venv\Scripts\python hq\worker.py</code>. Wait for "GVHMR loaded on ...". Reload the browser; the hq pill should show your GPU.</li>
+<li>Regenerate your 4 prompts with FLUX 3 Max, "wait for HQ" on, fingers on. Compare to Tier 0 by eye, then export GLBs again.</li>
+</ol>
+<h3>Tier 2: the reel (30 min)</h3>
+<ol>
+<li>Install Blender (4.4+; the script handles the 4.4 layered-action API).</li>
+<li>Per take: <code>&amp; "C:\Program Files\Blender Foundation\Blender 4.5\blender.exe" -b -P tools\render_blender.py -- takes\&lt;take&gt;.glb --side-by-side</code> (use your real version folder). Use <code>--preview</code> first for a fast look.</li>
+<li>Concatenate the four <code>renders\*_compare.mp4</code> with ffmpeg concat. Done: that is your showcase.</li>
+</ol>
+<h3>Tier 3 (stretch): measure it, don't eyeball it</h3>
+<p>Write a ~100-line Python script that loads two exports of the same clip (live vs HQ) and computes per-joint angular jerk (third derivative of rotation, via quaternion log-differences), foot-skate (horizontal foot velocity while foot height is below a threshold) and bone-length variance. Plot them. This turns "HQ looks better" into a number and is the first brick of the bigger project in section 4. <code>bench/hands_bench.py</code> already does the same for fingers (detection rate, 2D jitter): run it with <code>hq\.venv\Scripts\python</code>, not system Python.</p>
+<h2>3. Windows frictions (found in the code)</h2>
+<ol>
+<li><code>.env</code> encoding. <code>server.mjs</code> parses <code>.env</code> as UTF-8 with a line regex. In Windows PowerShell 5.1, <code>echo FAL_KEY=x &gt; .env</code> writes UTF-16LE, the regex never matches, and you get the "FAL_KEY is not set" warning plus failing generations. Use <code>Set-Content -Encoding ascii</code> or Notepad. Also do not quote the value: the parser does not strip quotes, so <code>FAL_KEY="abc"</code> sends the quotes and fal returns 401. A UTF-8 BOM is harmless (JS <code>\s</code> matches U+FEFF).</li>
+<li><code>.env.example</code> is absent in your copy, so the README's <code>cp .env.example .env</code> fails. Just create <code>.env</code> as above.</li>
+<li>Execution policy. <code>hq\setup.ps1</code> is blocked by default (and the zip download carries Mark-of-the-Web). Use <code>-ExecutionPolicy Bypass -File</code>, or <code>Get-ChildItem -Recurse | Unblock-File</code> once.</li>
+<li>Silent failures in setup.ps1. <code>$ErrorActionPreference = "Stop"</code> does not stop on a failing native exe (uv, gvhmr.exe) in PowerShell 5.1. Read the output; if any <code>uv pip install</code> errors, the script carries on and the worker fails later with an import error. Rerunning is safe.</li>
+<li>GPU generation. setup.ps1 installs torch 2.7.1 from the cu126 index. That covers RTX 20/30/40. An RTX 50-series (Blackwell, sm_120) needs CUDA 12.8 wheels: change the index URL to <code>https://download.pytorch.org/whl/cu128</code>. Update the NVIDIA driver either way.</li>
+<li>Long paths. uv building git dependencies can hit MAX_PATH under a deep folder like <code>Downloads\...\mixamorig_stefan\prompt2rig-main</code>. Either move the repo to <code>C:\p2r</code> or enable long paths (admin): <code>New-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem -Name LongPathsEnabled -Value 1 -PropertyType DWord -Force</code>.</li>
+<li>ffmpeg must be on PATH for the worker itself (it resamples every clip to 30 fps with <code>subprocess.run(["ffmpeg", ...])</code>), not just for renders. A winget install needs a fresh terminal.</li>
+<li>Hard-coded paths. README uses <code>Blender 5.2</code>; <code>tools/capture.mjs</code> defaults to <code>C:/Program Files/Google/Chrome/Application/chrome.exe</code> (pass <code>--chrome</code> otherwise) and needs <code>npm install</code> first for puppeteer-core.</li>
+<li>No NVIDIA GPU: the worker calls CUDA unconditionally (<code>device=0</code>, <code>half=True</code>), so it will not run on CPU or AMD. Tier 0 still works.</li>
+<li>Firewall: both servers bind to localhost only, so Windows Defender prompts can be denied safely.</li>
+</ol>
+<p>Cost: every generation is a paid fal call (FLUX schnell image once per orientation, then one video per prompt). Check current fal pricing before running stream mode, which generates continuously including idle filler clips.</p>
+<h2>4. Where to take it (solo-AI project ideas)</h2>
+<ul>
+<li>Closed-loop prompt optimiser. Treat retargetability as a reward: score each take with the Tier 3 metrics plus hand coverage (the worker already returns per-hand <code>coverage</code>), and let an LLM rewrite the prompt to maximise it. Black-box optimisation over the video model's prompt space with a physics-plausibility objective.</li>
+<li>Physics projection. GVHMR output still foot-skates and floats. Add a post-pass that enforces contact constraints (detect stance frames, pin feet, IK the legs), or track the motion with a physics-simulated humanoid (the PHC / PULSE line of work).</li>
+<li>Motion library + retrieval. Store every take's SMPL params, embed them, and build "search by motion". You are bootstrapping a synthetic AMASS-style dataset from a video model: video models as world/motion priors.</li>
+<li>Multi-view consistency. Generate the same prompt from two camera angles with a fixed seed and check whether GVHMR recovers the same 3D motion. Disagreement measures how physically coherent the video model's "imagination" is.</li>
+<li>Commercial-clean variant. Swap GVHMR/SMPL-X/WiLoR/YOLO for permissively licensed parts (for example MediaPipe + a temporal smoother you train yourself). Distillation from a non-commercial teacher has its own license questions; check them before shipping.</li>
+</ul>
+</body></html>

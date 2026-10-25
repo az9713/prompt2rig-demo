@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>prompt2rig demo</title>
+<style>
+  :root { --bg:#fafafa; --fg:#1b1b1f; --muted:#5c5c66; --link:#b0306a; --card:#fff; --line:#e3e3e8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#141418; --fg:#ececf1; --muted:#a0a0ab; --link:#f07ab0; --card:#1d1d23; --line:#2e2e36; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { margin:0 0 4px; font-size:28px; }
+  p.lead { color:var(--muted); margin:0 0 24px; }
+  a { color:var(--link); }
+  video { width:100%; border-radius:10px; background:#000; display:block; }
+  ul { list-style:none; padding:0; display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); margin:24px 0; }
+  li { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  li a { font-weight:600; text-decoration:none; }
+  li span { display:block; color:var(--muted); font-size:14px; margin-top:4px; }
+  footer { color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>prompt2rig demo</h1>
+  <p class="lead">Type a motion, a video model acts it out, and a Mixamo character performs it live. Recorded on a Windows laptop with
+    <a href="https://github.com/blendi-remade/prompt2rig">blendi-remade/prompt2rig</a>, found via
+    <a href="https://www.youtube.com/watch?v=58UpDAnbdkM&amp;t=343s">Stefan's video</a>.</p>
+  <video src="prompt2rig_demo2.mp4" poster="prompt2rig_demo2_thumb.jpg" controls playsinline preload="metadata"></video>
+  <ul>
+    <li><a href="prompt2rig_beginner_guide.html">Beginner guide</a><span>Setup tiers 0 to 3 and the Windows frictions</span></li>
+    <li><a href="DEVELOPMENT-JOURNEY.html">Development journey</a><span>How the demo went, with frame sheets</span></li>
+    <li><a href="prompt2rig_demo2.mp4">Demo video (MP4)</a><span>51 s, 4.3 MB</span></li>
+    <li><a href="https://github.com/az9713/prompt2rig-demo">Source on GitHub</a><span>README and the Git Bash wrapper scripts</span></li>
+  </ul>
+  <footer>prompt2rig is Apache-2.0 by blendi-remade. Its HQ path uses non-commercial models (GVHMR, SMPL-X, WiLoR, MANO).</footer>
+</main>
+</body>
+</html>

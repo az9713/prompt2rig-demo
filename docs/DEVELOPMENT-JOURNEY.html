@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Prompt-to-Reel Development Journey</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <style>
+  :root{--bg:#fbfaf7;--fg:#1d1d1f;--muted:#5f6368;--line:#e3e1dc;--code:#f1efea;--accent:#b5179e}
+  @media (prefers-color-scheme:dark){:root{--bg:#141416;--fg:#e8e6e3;--muted:#a0a0a8;--line:#2c2c31;--code:#1f1f24;--accent:#f06bd8}}
+  html{background:var(--bg)}
+html body{background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif;max-width:none !important;width:auto;margin:0;padding:32px clamp(16px,3vw,48px)}
+  h1{font-size:1.7em;line-height:1.25}h2{margin-top:2em;border-bottom:1px solid var(--line);padding-bottom:.3em}h3{margin-top:1.5em}
+  code{background:var(--code);padding:.1em .35em;border-radius:4px;font:.9em ui-monospace,Consolas,monospace;word-break:break-word}
+  blockquote{border-left:3px solid var(--accent);margin:1em 0;padding:.2em 1em;color:var(--muted)}
+  table{border-collapse:collapse;width:100%;display:block;overflow-x:auto}th,td{border:1px solid var(--line);padding:6px 10px;vertical-align:top;text-align:left}th{background:var(--code)}
+  a{color:var(--accent)}figure{margin:1.5em 0}figure img{max-width:100%;border:1px solid var(--line);border-radius:6px}figcaption{color:var(--muted);font-size:.9em}
+  </style>
+</head>
+<body>
+<h1
+id="development-journey--prompt-to-reel-beginner-showcase-for-prompt2rig-on-windows">Development
+Journey — "Prompt-to-Reel" beginner showcase for prompt2rig on
+Windows</h1>
+<p><strong>Date:</strong> 2026-10-25 (about 20:53–22:30 UTC)<br>
+<strong>Deliverable:</strong>
+<code>%USERPROFILE%\Downloads\mixamorig_stefan\prompt2rig_reel\</code>
+(Git Bash wrapper project), plus the user's screen recordings
+<code>prompt2rig_demo.mp4</code> (65.3 s) and
+<code>prompt2rig_demo2.mp4</code> (51.8 s) in the same parent folder<br>
+<strong>Brief:</strong> "Read the prompt2rig/ codebase. tell me how i
+can create a small beginner project that showcase its capabilities"<br>
+<strong>Follow-up briefs (verbatim, in order):</strong> "write a html
+version verbatim" · "does the repo run on GitBash" · "can you create a
+project for me. let me know what inputs you need." · "how do i run it ?
+what do i expect ?" · "can you run the 3 scripts and open the app at
+5177" · "done" · "do these reel demos come with the repo ?" · "where
+does the human character come from ?" · "i mean the human character on
+the left. where does the character come from"<br> <strong>Final
+render/artifact:</strong>
+<code>journey_media/prompt2rig_demo_sheet.png</code>,
+<code>journey_media/prompt2rig_demo2_sheet.png</code> (contact sheets, 1
+frame per 5 s),
+<code>journey_media/take6_jumping_jacks_frame.png</code></p>
+<blockquote>
+<p><strong>Provenance: this doc is partly reconstructed.</strong> It was
+written by a <em>later</em> session (the "/dev-journey" thread, starting
+22:13 UTC), not by the session that did the build. That session's
+internal tool calls and raw error output were not available to me. What
+I had: (a) every message posted in the build thread and in the project
+chat, with timestamps; (b) the files it produced, in both the cloud
+project-files copy and on the laptop; (c) the project memory file
+<code>prompt2rig-windows-setup.md</code>; (d) the two screen recordings,
+which I sampled frame by frame. Each section says when a claim comes
+from a message alone and was not re-checked. Section 2b (this session)
+is first-hand.</p>
+</blockquote>
+<h2
+id="1-the-brief--show-me-what-this-repo-can-do-as-something-a-beginner-can-build">1.
+The brief — "show me what this repo can do, as something a beginner can
+build"</h2>
+<p>The user had downloaded <code>prompt2rig-main</code>
+(blendi-remade/prompt2rig; "type a motion, watch a rigged character
+perform it") into <code>%USERPROFILE%\Downloads\mixamorig_stefan</code>
+after seeing it in a PixelArtistry YouTube roundup (the links are saved
+in <code>README.txt</code>). The ask was open-ended: read the code, then
+propose a small project that shows off the repo.</p>
+<p>How it was read: "beginner" means <em>something works within 15
+minutes</em>. "Showcase" means <em>an output you can show someone</em>:
+a video reel, not just a working app. The user's standing preferences
+shaped the tone: a technically deep reader, no fluff, stretch
+suggestions welcome. That is why the plan ends with a quantitative Tier
+3 instead of stopping at a render.</p>
+<p>The ask then grew in five steps: guide → HTML copy → Git Bash
+compatibility → "create a project for me" → "run it for me". Each step
+is a turn in this story.</p>
+<h2 id="2-setup--getting-to-a-working-state-and-the-folder-confusion">2.
+Setup — getting to a working state (and the folder confusion)</h2>
+<h3
+id="2a-build-thread-design-beginner-prompt2rig-showcase-project-20542208">2a.
+Build thread ("Design beginner prompt2rig showcase project",
+20:54–22:08)</h3>
+<ul>
+<li><strong>Minute zero.</strong> The coordinator asked for device
+folder access, but the only folder the laptop offered was
+<code>%USERPROFILE%\Downloads\other-project</code>, which is
+unrelated to this project. It was approved and connected by mistake. The
+repo was not in it, so the build session read the <strong>cloud
+project-files copy</strong> at
+<code>/mnt/project-files/mixamorig_stefan/prompt2rig-main</code>
+instead.</li>
+<li><strong>"i dont see the guide in cwd" (21:00).</strong> The guide
+existed only as a Claude Doc
+and as
+a Markdown file in project-files. The coordinator first told the thread
+to write a copy into the other-project folder, then retracted that 41 s later
+after the user asked "why other-project folder ? is that folder
+associated with this project". Nothing was written there.</li>
+<li><strong>"the cwd of course" / "i dont see it"
+(21:02–21:03).</strong> Root cause:
+<strong><code>/mnt/project-files</code> does not sync back to the
+laptop.</strong> The coordinator had told the user the file was "already
+there". It wasn't, on the laptop. Fix: request folder access to
+<code>%USERPROFILE%\Downloads\mixamorig_stefan</code> and write the
+file with <code>device_commit_files</code> (21:04).
+<ul>
+<li>Rule learned: <em>"project files" is a cloud folder; the user's cwd
+is a different disk. Always commit to the device.</em></li>
+</ul></li>
+<li><strong>Remote Control (21:21).</strong> To run the scripts, the
+thread started a Remote Control session. The status card shows it ran in
+<code>%USERPROFILE%\Downloads\other-project</code>, because that was the
+only folder the laptop served for RC. It worked anyway because every
+command used absolute paths into <code>mixamorig_stefan</code>. That
+luck is recorded in section 6.</li>
+</ul>
+<h3 id="2b-this-session-dev-journey-2213">2b. This session
+("/dev-journey", 22:13–)</h3>
+<ul>
+<li><code>/dev-journey</code> is not a skill registered in the cloud
+session. A search of the container's <code>~/.claude/skills</code> found
+only <code>session-start-hook</code> and synced account skills.</li>
+<li><code>get_device_info</code> home listing did not include
+<code>.claude</code>. I told the user that
+<code>%USERPROFILE%\.claude</code> is "off-limits". <strong>That was
+wrong as stated.</strong> It is blocked from <em>folder access</em>
+(Claude's own data folders are protected), but not from a Remote Control
+session, which runs as the user. The user corrected me:
+"%USERPROFILE%\.claude\ is not offlimit".</li>
+<li><strong>First RC attempt (22:18) ran in
+<code>other-project</code> again</strong>, even though I passed
+<code>folder: %USERPROFILE%\Downloads\mixamorig_stefan</code>. The user
+caught it: "wait why do you work in other-project folder/." I stopped it
+about 30 s after start. It had reported nothing.</li>
+<li><strong>Second RC attempt (22:20):</strong> the user's app served
+<code>mixamorig_stefan</code> as a new RC environment, which I confirmed
+via <code>list_devices</code> before waiting on it. The RC session
+copied
+<code>%USERPROFILE%\.claude\skills\dev-journey\{SKILL.md, CHANGELOG.md}</code>
+to <code>mixamorig_stefan\_dev-journey-skill\</code>. It reported that
+it touched only those paths.
+<ul>
+<li>Rule learned: <em>an RC "folder" argument is a request, not a
+guarantee. Check which environment actually started before trusting
+it.</em></li>
+</ul></li>
+</ul>
+<h2 id="3-design-decisions">3. Design decisions</h2>
+<ul>
+<li><strong>Project shape: a tiered "Prompt-to-Reel".</strong> One
+Mixamo character performs 4 prompted moves, each rendered side by side
+with its AI source clip.
+<ul>
+<li>Tier 0: browser only, Node + fal key, no GPU.</li>
+<li>Tier 1: GVHMR HQ pass on the local GPU, plus optional WiLoR/MANO
+fingers.</li>
+<li>Tier 2: Blender side-by-side render and an ffmpeg concat.</li>
+<li>Tier 3: numbers instead of eyeballing (jerk, foot-skate, hips
+wobble, limb stretch).</li>
+<li><em>Why tiers:</em> the HQ path needs a CUDA GPU, about 5 GB of
+checkpoints, and two academic-license registrations (SMPL-X, MANO). A
+single all-or-nothing project would stall at minute 10 for most
+beginners. Each tier produces something.</li>
+<li><em>Rejected (inferred from the guide, not stated as rejected):</em>
+a pure HQ demo (too much setup), and a browser-only demo (shows nothing
+of the repo's main contribution, GVHMR).</li>
+</ul></li>
+<li><strong>Wrapper next to the repo, not edits inside it.</strong>
+<code>prompt2rig_reel/</code> sits beside <code>prompt2rig-main/</code>
+and changes no repo files. Repo updates stay clean, and the user's
+question "do these reel demos come with the repo?" had a crisp answer:
+no.</li>
+<li><strong>Git Bash first, after the user asked about it.</strong> The
+guide had been written for PowerShell. The wrapper switched to bash:
+<code>make_env.sh</code> writes UTF-8, and <code>setup_hq.sh</code>
+shells out to <code>powershell.exe -ExecutionPolicy Bypass</code> only
+for the repo's <code>setup.ps1</code>.</li>
+<li><strong>Never handle the fal key.</strong> <code>make_env.sh</code>
+uses <code>read -rsp</code>. The RC session was told never to print or
+transmit the key, and the key prompt was opened in a visible Git Bash
+window for the user to paste into. This cost a human round-trip (section
+6, #5) but was non-negotiable.</li>
+<li><strong>Default prompts follow the repo's own rule</strong> ("face
+the camera, limbs clear of the torso, no spins, flips, floor work or
+crossed arms"): tennis forehand/backhand, Macarena, orchestra conductor,
+counting on fingers. The last one doubles as a finger-tracking
+test.</li>
+<li><strong>Defaults instead of blocking on answers.</strong> The thread
+asked the user 5 questions (GPU, Blender version, prompts, character,
+fal credit) and built with defaults in the meantime. Michelle was the
+default rig and Blender 4.5 the default path.</li>
+<li><strong>Descoped / YAGNI:</strong> no edits to
+<code>hq/setup.ps1</code> (its failures are wrapped and verified from
+bash instead of patched in place), no CPU/AMD fallback for the worker
+(it hard-codes CUDA), and no automation of the browser UI (the user
+presses generate and ↓ glb by hand).</li>
+</ul>
+<h2
+id="4-the-core-problem-windows-is-not-where-this-repo-was-born--and-neither-were-we">4.
+The core problem: Windows is not where this repo was born — and neither
+were we</h2>
+<p>The repo was "Tested on Windows 11 with an RTX 4090" (README, line
+188). It works on Windows, but its instructions assume PowerShell, a big
+GPU and a clean path. The real crux was <strong>ten small frictions that
+each fail silently</strong>. They were found by reading the code, not by
+hitting them:</p>
+<ol type="1">
+<li><code>server.mjs</code> parses <code>.env</code> as UTF-8 with a
+line regex. PowerShell 5.1's <code>echo FAL_KEY=x &gt; .env</code>
+writes <strong>UTF-16LE</strong>, the regex never matches, and you get
+<code>FAL_KEY is not set</code>.</li>
+<li>The parser does not strip quotes, so <code>FAL_KEY="abc"</code>
+sends the quotes and fal returns 401. <code>make_env.sh</code> strips
+them and <code>doctor.sh</code> flags them.</li>
+<li><code>hq\setup.ps1</code> is blocked by execution policy, and the
+zip carries Mark-of-the-Web.</li>
+<li><code>$ErrorActionPreference = "Stop"</code> does
+<strong>not</strong> stop on failing native exes in PS 5.1, so a failed
+<code>uv pip install</code> carries on. <code>setup_hq.sh</code>
+therefore ends with an explicit
+<code>import torch, gvhmr, ultralytics, fastapi; assert torch.cuda.is_available()</code>.</li>
+<li>torch 2.7.1 from <code>cu126</code> lacks sm_120 (RTX 50).
+<code>CUDA_INDEX</code> in <code>config.sh</code> sed-patches a copy to
+<code>cu128</code>.</li>
+<li>MAX_PATH under
+<code>Downloads\...\mixamorig_stefan\prompt2rig-main</code>.
+<code>doctor.sh</code> reads <code>LongPathsEnabled</code>.</li>
+<li>The worker itself shells out to <code>ffmpeg</code>, so ffmpeg must
+be on PATH for Tier 1, not just for renders.</li>
+<li>Hard-coded paths: README says <code>Blender 5.2</code>, and
+<code>tools/capture.mjs</code> assumes Chrome's default path.</li>
+<li>The worker is CUDA-only (<code>device=0</code>,
+<code>half=True</code>).</li>
+<li>Both servers bind to localhost only, so Defender prompts can be
+denied safely.</li>
+</ol>
+<p>And a Git Bash layer on top:</p>
+<ul>
+<li>backslash paths break, so use
+<code>hq/.venv/Scripts/python</code></li>
+<li>don't <code>source activate</code>; call the venv's Python by
+path</li>
+<li>mintty may not forward Ctrl+C to native Windows processes, so
+<code>run.sh</code> traps and runs <code>taskkill //F //T //PID</code>
+on the worker's <code>winpid</code></li>
+<li><code>//</code> doubling for Windows-style flags</li>
+</ul>
+<p><strong>The wart in this section: friction #2 in the published guide
+is wrong for the user's actual copy.</strong> The guide says
+"<code>.env.example</code> is absent in your copy, so the README's
+<code>cp .env.example .env</code> fails." On the laptop,
+<code>prompt2rig-main\.env.example</code> exists (67 bytes, 20:51) and
+so does <code>.gitignore</code>. The <strong>cloud project-files copy
+dropped every dotfile</strong> in the upload, and the build session read
+only that copy. The 21:24 hand-off ("Your copy has no
+<code>.env.example</code>") repeated it. Nobody noticed until this
+session listed the laptop folder. It caused no harm, because
+<code>make_env.sh</code> writes <code>.env</code> directly, but the
+guide states something false.</p>
+<ul>
+<li>Rule learned: <em>a mirrored copy is evidence about the mirror.
+Check claims of "file X is missing" against the real disk.</em></li>
+</ul>
+<h2 id="5-tools-and-features-used">5. Tools and features used</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Tool / feature</th>
+<th>What it did in this project</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Coordinator + thread model</td>
+<td>The coordinator routed 9 user messages into the build thread and
+spun up this journey thread</td>
+</tr>
+<tr class="even">
+<td>Claude Docs</td>
+<td>Hosted the first guide (<code>3NaVooAX8N9tJmVZcVGait</code>); the
+GPU question was left as a doc comment</td>
+</tr>
+<tr class="odd">
+<td>Artifact (HTML page)</td>
+<td>"prompt2rig: beginner showcase project (Windows)" attached to the
+build thread</td>
+</tr>
+<tr class="even">
+<td>Device folder access (<code>device_commit_files</code>,
+<code>device_bash</code>)</td>
+<td>Wrote the guide <code>.md</code>/<code>.html</code> and
+<code>prompt2rig_reel/</code> to the laptop; this session also listed
+the folder and ran <code>ffprobe</code></td>
+</tr>
+<tr class="odd">
+<td>Remote Control sessions</td>
+<td>Thread 1: <code>doctor.sh</code>, <code>.env</code> check, opened a
+Git Bash window "prompt2rig" at the key prompt, restarted the app in
+"prompt2rig app", read the status pills. Thread 2: copied the
+dev-journey skill</td>
+</tr>
+<tr class="even">
+<td>Cloud container <code>Bash</code></td>
+<td>Wrote and tested <code>metrics.py</code> (synthetic GLBs); this
+session made contact sheets with
+<code>ffmpeg -vf fps=1/5,tile</code></td>
+</tr>
+<tr class="odd">
+<td>Project memory</td>
+<td><code>prompt2rig-windows-setup.md</code>, <code>MEMORY.md</code>:
+folder mapping, frictions, GPU, Blender version</td>
+</tr>
+<tr class="even">
+<td><code>/dev-journey</code> skill</td>
+<td><code>%USERPROFILE%\.claude\skills\dev-journey\SKILL.md</code>
+(2026-09-15) set the structure of this document</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Agents and AI machinery:</strong> no subagents and no
+workflows. Everything was done inline by the coordinator, the build
+thread, and three short RC sessions (one in the build thread, two in
+this one). Model identity is not recorded here on purpose.</p>
+<p><strong>Tech stack, as built:</strong></p>
+<ul>
+<li><code>prompt2rig</code> = Node <code>server.mjs</code> (port 5177,
+fal proxy) → browser three.js app (<code>public/app.js</code>,
+<code>retarget.js</code>, <code>stage.js</code>)
+<ul>
+<li>MediaPipe Pose (<code>pose: heavy</code>) gives a live per-frame
+retarget onto a Mixamo rig. X Bot, Michelle and Soldier come from
+<code>jsDelivr three.js@r169/examples/models/gltf/</code>.</li>
+<li>Optional Python HQ worker (<code>hq/worker.py</code>, FastAPI):
+GVHMR + SMPL-X, plus WiLoR/MANO for fingers.</li>
+</ul></li>
+<li>Video: fal image-to-video (H3 Max Turbo / FLUX 3 Max) from a
+one-time FLUX.1 schnell "performer" image (<code>PERFORMER_PROMPT</code>
+in <code>public/app.js</code>). The performer URL is cached in browser
+localStorage.</li>
+<li>Wrapper: bash + <code>config.sh</code>. <code>metrics.py</code>
+needs only numpy: it reads GLB animation channels directly and computes
+jerk from quaternion log differences.</li>
+</ul>
+<h2 id="6-what-went-wrong-and-the-fixes">6. What went wrong, and the
+fixes</h2>
+<ol type="1">
+<li><strong>Wrong device folder connected at start</strong>
+(<code>other-project</code>). Fix: the coordinator retracted
+the write instruction within 41 s. Folder access to
+<code>mixamorig_stefan</code> was requested at 21:03.</li>
+<li><strong>"Already there" claim that wasn't</strong> (21:02,
+coordinator). The guide was in cloud project files only. Fix:
+<code>device_commit_files</code> to the laptop at 21:04. Cost: three
+frustrated user messages.</li>
+<li><strong>Guide friction #2 false for the real disk</strong> (see
+section 4). <strong>Not fixed in the guide yet.</strong></li>
+<li><strong>Two contradictory instructions two minutes apart</strong>
+(21:24 "run <code>./make_env.sh</code> yourself"; 21:26 "Easier now:
+there's a Git Bash window titled "prompt2rig" open… Paste your key
+there"). The second superseded the first, but the user received
+both.</li>
+<li><strong>The key window died before the user used it.</strong> The
+user typed "done" at 21:59, 33 min after the window opened.
+<code>.env</code> was written at 21:58 (78 bytes), but the app was not
+up: "the first window had stopped". The cause was never established. A
+guess I can't verify: the window ran
+<code>make_env.sh &amp;&amp; run.sh --live</code>, and the server
+process exited, or the window was closed. Fix: RC restarted the app in a
+new Git Bash window "prompt2rig app" and confirmed it up at 22:01.</li>
+<li><strong>Ambiguous question answered twice.</strong> "where does the
+human character come from?" got a two-part answer (performer image +
+Mixamo rig). The user meant only "the human character on the left". The
+coordinator answered that directly at 22:09.</li>
+<li><strong>This session: "%USERPROFILE%\.claude\ is
+off-limits."</strong> That was too strong. Fix: RC session, after the
+user's correction.</li>
+<li><strong>This session: RC started in the wrong folder</strong>
+(the other-project environment) despite
+<code>folder: mixamorig_stefan</code>. The user caught it and I stopped
+it. The second attempt landed in
+a new environment (mixamorig_stefan), verified
+with <code>list_devices</code>.</li>
+</ol>
+<p><strong>Near-misses:</strong></p>
+<ul>
+<li>The 21:01 instruction to save the guide into
+<code>other-project</code> would have put project files in an
+unrelated folder. It was retracted before anything was written.</li>
+<li><code>config.sh</code> still points at <code>Blender 4.5</code>. The
+laptop has 4.4. The 21:24 message offered "I'll point
+<code>config.sh</code> at the 4.4 folder unless you'd rather install
+4.5". It never got a reply and was never applied. <code>doctor.sh</code>
+will report Blender as <code>missing</code>, and
+<code>render_reel.sh</code> exits with
+<code>Blender not found: edit BLENDER in config.sh</code>.</li>
+</ul>
+<p><strong>Fragility and luck:</strong></p>
+<ul>
+<li>The first RC session ran with cwd in the other-project folder and still
+worked, because every command used absolute paths. It was lucky, not
+designed.</li>
+<li>Asset loads depend on the jsDelivr CDN. A blocked CDN leaves the
+rig/pose pills on "loading".</li>
+<li>The VRAM figure ("likely 4 GB") for the RTX 3050 Laptop GPU is a
+guess from the model name. It was never measured with
+<code>nvidia-smi --query-gpu=memory.total</code>.</li>
+</ul>
+<h2 id="7-verification">7. Verification</h2>
+<p><strong>Checked by observed effect:</strong></p>
+<ul>
+<li>App up: RC reported HTTP 200 on <code>http://localhost:5177</code>
+and the pills <code>x bot</code> and <code>pose: heavy</code> green,
+<code>hq · worker offline</code>, no console errors (22:01, from the RC
+session's report).</li>
+<li><code>.env</code>: plain text, unquoted <code>FAL_KEY</code> (RC
+report). I confirmed it exists on disk at 78 bytes, mtime 21:58, without
+reading its contents.</li>
+<li><code>metrics.py</code>: run in the cloud container on two synthetic
+GLBs (smooth vs noisy). The jerk matched the analytic value within 3%
+(build-thread report; not re-run by me).</li>
+<li><strong>The demo itself, verified by me from the
+recordings:</strong>
+<ul>
+<li>Live mode (<code>live · mediapipe</code>), portrait 9:16,
+<code>h3 max turbo · fastest</code>, source
+<code>performer → video</code>.</li>
+<li>Seven takes, all from the app's built-in preset list, not from
+<code>prompts.txt</code>:
+<ul>
+<li>#1 and #2 "throws boxing jabs and hooks toward the camera"</li>
+<li>#3 "celebrates a victory, jumping and pumping both fists in the
+air"</li>
+<li>#4 "does a karate kata with straight punches and front kicks"</li>
+<li>#5 "shoots an imaginary basketball jump shot"</li>
+<li>#6 "does jumping jacks"</li>
+<li>#7 "does an energetic hip hop dance with wide, open arm
+movements"</li>
+</ul></li>
+<li>Generation times shown on the take cards: 1.8 s, 1.8 s, 2.1 s, 2.0 s
+and 3.6 s (#2 through #6).</li>
+<li>The rig used was <strong>X Bot</strong>, not the Michelle
+default.</li>
+</ul></li>
+</ul>
+<p><strong>Observed but unexplained:</strong></p>
+<ul>
+<li>Take #4 (karate kata) shows no <code>live</code> badge, and its
+<code>↓ glb</code> button looks greyed out in both recordings. Possible
+cause: pose tracking produced no usable motion for that clip (it has
+kicks, and side-on limbs break the repo's own prompt rule). Not
+investigated.</li>
+<li>In take #5 the video model gave the performer a <strong>real
+basketball</strong> for an "imaginary" jump shot. The prompt adjective
+was ignored. This is a nice visible example of video-model prompt
+drift.</li>
+</ul>
+<p><strong>Not verified:</strong></p>
+<ul>
+<li>No GLB was exported: <code>prompt2rig-main\takes\</code> does not
+exist.</li>
+<li>Tier 1 (<code>setup_hq.sh</code>), Tier 2
+(<code>render_reel.sh</code>) and Tier 3 on real takes have never run on
+the laptop.</li>
+<li><code>npm install</code> was never run (no
+<code>node_modules</code>). Tier 0 does not need it; only
+<code>tools/capture.mjs</code> does, via puppeteer-core.</li>
+<li>The fal cost figures (≈$0.016/s for H3 Max Turbo, ≈$0.021/s for FLUX
+3 Max, ≈$0.08 per 5 s clip) were quoted by the build thread as list
+prices and <strong>not checked against the fal billing page</strong>. At
+that rate the 7 takes plus one performer image come to roughly
+$0.56–0.60, an estimate only.</li>
+</ul>
+<h2 id="8-where-things-stand">8. Where things stand</h2>
+<p><strong>Costs and limits:</strong> about 7 fal video generations plus
+at least 1 FLUX.1 schnell performer image (spend estimated in section
+7). No quota or rate limit was hit. Wall clock: guide in about 2.5 min
+(20:54→20:56); wrapper project in about 4 min (21:09→21:13); first live
+take reachable at 22:01, about 67 min after the first message. Most of
+that was human round-trips (folder confusion, the 33-min key wait).</p>
+<p><strong>Knowledge captured:</strong></p>
+<ul>
+<li><code>/tmp/claude/memory/team/silo/prompt2rig-windows-setup.md</code>
+and <code>MEMORY.md</code> (project memory): repo locations,
+"project-files does not sync back", other-project folder is unrelated, Git Bash,
+RTX 3050 / Blender 4.4 / node 22, the friction list.</li>
+<li>This doc, plus <code>journey_media/</code> and
+<code>_dev-journey-skill/</code> (the skill copy used to write it).</li>
+<li>Not a git repo, so nothing was committed.</li>
+</ul>
+<p><strong>Unfinished business:</strong></p>
+<ul>
+<li><strong>Fix guide friction #2</strong>
+(<code>prompt2rig_beginner_guide.md</code> and <code>.html</code>). The
+local copy <em>does</em> have <code>.env.example</code>. Low impact, but
+it is false.</li>
+<li><strong><code>config.sh</code> BLENDER →
+<code>/c/Program Files/Blender Foundation/Blender 4.4/blender.exe</code></strong>,
+or install 4.5. Blocks Tier 2.</li>
+<li><strong>Export GLBs.</strong> Press <code>↓ glb</code> on each take
+(live mode) so <code>takes/*_live.glb</code> exist. Needed for both the
+reel and Tier 3.</li>
+<li><strong>Use the reel prompts.</strong> The recorded demo used
+presets. <code>prompts.txt</code> (tennis, Macarena, conductor, finger
+counting) is still unrun. The finger-counting prompt is the only one
+that tests the hands.</li>
+<li><strong>Tier 1 on a 4 GB card is an open experiment.</strong> Start
+without MANO (MediaPipe finger fallback). GVHMR alone may or may not
+fit, and nobody has measured it.</li>
+<li><strong>Karate take #4.</strong> Find out why it has no live
+motion.</li>
+</ul>
+<p><strong>Next steps (options, not promises):</strong></p>
+<ol type="1">
+<li>Edit <code>config.sh</code> to 4.4, then
+<code>./doctor.sh</code>.</li>
+<li>Re-run the 4 <code>prompts.txt</code> prompts in live mode and
+export them, then <code>./setup_hq.sh</code> and try one HQ take while
+watching <code>nvidia-smi</code> for VRAM.</li>
+<li>Once one <code>_live</code>/<code>_hq</code> pair exists, run
+<code>metrics.py --plot</code>. That table turns the demo into a
+measured claim ("HQ cuts angular jerk by N×").</li>
+</ol>
+<h2 id="figures">Figures (journey_media)</h2>
+<figure><img src="journey_media/take6_jumping_jacks_frame.png" alt="Take 6 jumping jacks frame"><figcaption><code>journey_media/take6_jumping_jacks_frame.png</code></figcaption></figure>
+<figure><img src="journey_media/prompt2rig_demo_sheet.png" alt="prompt2rig_demo.mp4 contact sheet"><figcaption><code>journey_media/prompt2rig_demo_sheet.png</code></figcaption></figure>
+<figure><img src="journey_media/prompt2rig_demo2_sheet.png" alt="prompt2rig_demo2.mp4 contact sheet"><figcaption><code>journey_media/prompt2rig_demo2_sheet.png</code></figcaption></figure>
+</body>
+</html>

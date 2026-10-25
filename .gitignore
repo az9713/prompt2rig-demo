@@ -1,0 +1,15 @@
+# secrets
+.env
+.env.*
+*.key
+# local outputs from the wrapper
+prompt2rig_reel/reel.mp4
+prompt2rig_reel/metrics.csv
+prompt2rig_reel/metrics.png
+takes/
+# original repo and local-only material
+prompt2rig-main/
+_dev-journey-skill/
+.ignore/
+*.md
+!README.md
